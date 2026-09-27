@@ -1,0 +1,378 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Tribunal de la Ansiedad</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config for Custom Colors and Animations -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        success: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'fade-out-blur': 'fadeOutBlur 1.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeOutBlur: {
+                            '0%': { opacity: '1', filter: 'blur(0px)' },
+                            '100%': { opacity: '0.3', filter: 'blur(2px)', textDecoration: 'line-through' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS for specific behaviors -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: transparent; /* Ideal for embeds */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+
+    <!-- Import Maps for React and dependencies -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "lucide-react": "https://esm.sh/lucide-react@0.292.0"
+            }
+        }
+    </script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="p-4 md:p-8 text-slate-900 bg-slate-50 min-h-screen flex justify-center w-full">
+
+    <div id="root" class="w-full max-w-2xl"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+            ShieldCheck, 
+            User, 
+            Send, 
+            RefreshCcw, 
+            FileText, 
+            Scale, 
+            Heart
+        } from 'lucide-react';
+
+        
+        // Componente de burbuja de escritura (Typing Indicator)
+        const TypingIndicator = () => (
+            <div class="flex items-center gap-2 p-4 bg-brand-50 rounded-2xl rounded-tl-sm w-fit max-w-[80%] animate-fade-in border border-brand-100/50 shadow-sm">
+                <div class="flex gap-1">
+                    <div class="w-2 h-2 bg-brand-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-brand-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-brand-400 rounded-full typing-dot"></div>
+                </div>
+            </div>
+        );
+
+        // Componente de Tarjeta de Veredicto (Aparece al final del chat)
+        const VerdictCard = ({ caseData, onReset }) => (
+            <div class="bg-white rounded-2xl border-2 border-emerald-500 shadow-md overflow-hidden animate-slide-up w-full mt-4 mb-2">
+                <div class="bg-emerald-500 text-white p-4 flex items-center gap-2">
+                    <Scale size={20} />
+                    <h3 class="font-bold">Veredicto del Tribunal</h3>
+                </div>
+                
+                <div class="p-5 space-y-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pensamiento Desestimado:</h4>
+                        <p class="text-slate-500 line-through opacity-70 italic">"{caseData.thought}"</p>
+                    </div>
+                    
+                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                        <h4 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <Heart size={14} /> Nueva Perspectiva (Lo que le dirías a tu amigo):
+                        </h4>
+                        <p class="text-slate-800 font-medium leading-relaxed">"{caseData.friendAdvice}"</p>
+                    </div>
+
+                    <div class="pt-2 flex flex-col gap-2">
+                        <button 
+                            onClick={() => window.print()}
+                            class="w-full flex items-center justify-center gap-2 bg-slate-800 text-white py-3 rounded-xl hover:bg-slate-700 transition-colors text-sm font-semibold"
+                        >
+                            <FileText size={16} /> Guardar Expediente
+                        </button>
+                        <button 
+                            onClick={onReset}
+                            class="w-full flex items-center justify-center gap-2 bg-transparent text-slate-500 py-3 rounded-xl hover:bg-slate-100 transition-colors text-sm font-semibold"
+                        >
+                            <RefreshCcw size={16} /> Iniciar Nuevo Caso
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        function App() {
+            const [messages, setMessages] = useState([]);
+            const [inputValue, setInputValue] = useState('');
+            const [step, setStep] = useState(0);
+            const [isTyping, setIsTyping] = useState(false);
+            const messagesEndRef = useRef(null);
+
+            // Almacenamiento de datos del caso mientras se desarrolla el chat
+            const [caseData, setCaseData] = useState({
+                thought: '',
+                evidence: '',
+                alternatives: '',
+                friendAdvice: ''
+            });
+
+            // Función para auto-scroll al final del chat
+            const scrollToBottom = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            };
+
+            useEffect(() => {
+                scrollToBottom();
+            }, [messages, isTyping]);
+
+            // Inicialización del chat
+            useEffect(() => {
+                if (messages.length === 0) {
+                    setIsTyping(true);
+                    setTimeout(() => {
+                        setMessages([{
+                            id: 1,
+                            sender: 'bot',
+                            type: 'text',
+                            text: "Hola. Estás en un espacio seguro. Soy tu Abogado Defensor en este 'Tribunal de la Ansiedad'. Mi trabajo es ayudarte a desmontar con compasión esos pensamientos que te asustan.\n\nPara empezar: ¿Cuál es el pensamiento exacto que te está generando ansiedad ahora mismo?"
+                        }]);
+                        setIsTyping(false);
+                    }, 1000);
+                }
+            }, []);
+
+            const handleSend = (e) => {
+                e.preventDefault();
+                if (!inputValue.trim()) return;
+
+                const userText = inputValue.trim();
+                const newUserMsg = { id: Date.now(), sender: 'user', type: 'text', text: userText };
+                
+                setMessages(prev => [...prev, newUserMsg]);
+                setInputValue('');
+                setIsTyping(true);
+
+                // Flujo condicional de preguntas basado en el paso actual
+                setTimeout(() => {
+                    let botResponse = "";
+                    let isVerdict = false;
+
+                    switch (step) {
+                        case 0: // Recibe el pensamiento original
+                            setCaseData(prev => ({ ...prev, thought: userText }));
+                            botResponse = "Te entiendo perfectamente. Vamos a investigar esta acusación juntos. En un tribunal necesitamos pruebas tangibles, no solo suposiciones.\n\n¿Qué evidencia o hechos reales e innegables tienes de que eso va a suceder?";
+                            setStep(1);
+                            break;
+                        case 1: // Recibe la evidencia
+                            setCaseData(prev => ({ ...prev, evidence: userText }));
+                            botResponse = "Anotado. A veces nuestra mente nos cuenta solo la versión más catastrófica de la historia basada en muy poca evidencia.\n\n¿Qué otra explicación o 'coartada' lógica podría existir para esta situación, aparte de ese peor escenario?";
+                            setStep(2);
+                            break;
+                        case 2: // Recibe las alternativas
+                            setCaseData(prev => ({ ...prev, alternatives: userText }));
+                            botResponse = `Me gusta esa perspectiva. Ahora, el testigo clave.\n\nImagina que tu mejor amigo se sienta frente a ti, angustiado, y te dice exactamente tu pensamiento inicial: "${caseData.thought || 'eso que pensabas'}".\n\n¿Qué le dirías con amor para consolarlo y mostrarle la realidad?`;
+                            setStep(3);
+                            break;
+                        case 3: // Recibe el consejo de amigo y termina el caso
+                            const finalData = { ...caseData, friendAdvice: userText };
+                            setCaseData(finalData);
+                            botResponse = "¡Excelente! Has defendido este caso con muchísimo éxito. Como tu abogado, declaro que el pensamiento inicial carece de fundamentos. Aquí tienes el expediente oficial de tu victoria:";
+                            isVerdict = true;
+                            setStep(4);
+                            
+                            // Guardar en historial (localStorage simple)
+                            const savedCases = JSON.parse(localStorage.getItem('tribunal_cases') || '[]');
+                            localStorage.setItem('tribunal_cases', JSON.stringify([{...finalData, date: new Date().toISOString()}, ...savedCases]));
+                            break;
+                        default:
+                            botResponse = "El caso ha sido cerrado. Puedes guardar tu expediente o iniciar uno nuevo.";
+                    }
+
+                    // Agregar mensaje del bot
+                    setMessages(prev => [...prev, {
+                        id: Date.now() + 1,
+                        sender: 'bot',
+                        type: 'text',
+                        text: botResponse
+                    }]);
+
+                    // Si es el final, agregar la tarjeta de veredicto
+                    if (isVerdict) {
+                        setTimeout(() => {
+                            setMessages(prev => [...prev, {
+                                id: Date.now() + 2,
+                                sender: 'bot',
+                                type: 'verdict'
+                            }]);
+                            scrollToBottom();
+                        }, 1000);
+                    }
+
+                    setIsTyping(false);
+                }, 1500 + Math.random() * 1000); // Retraso de tipeo aleatorio realista
+            };
+
+            const resetChat = () => {
+                setStep(0);
+                setCaseData({ thought: '', evidence: '', alternatives: '', friendAdvice: '' });
+                setMessages([]); // Al limpiar, el useEffect inicial volverá a disparar el saludo
+            };
+
+            return (
+                <div class="flex flex-col h-[650px] w-full bg-slate-50 rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                    
+                    {/* Header */}
+                    <div class="bg-white px-6 py-4 border-b border-slate-100 flex items-center justify-between z-10 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-brand-100 p-2 rounded-xl text-brand-600">
+                                <ShieldCheck size={24} />
+                            </div>
+                            <div>
+                                <h1 class="font-bold text-slate-800 leading-tight">El Defensor Compasivo</h1>
+                                <p class="text-xs text-brand-600 font-medium flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> En línea
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Chat Area */}
+                    <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/50 hide-scrollbar">
+                        {messages.map((msg) => (
+                            <div key={msg.id} class={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} animate-fade-in`}>
+                                
+                                {msg.type === 'text' && (
+                                    <div class={`flex gap-3 max-w-[85%] md:max-w-[75%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                        
+                                        {/* Avatar */}
+                                        <div class={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 shadow-sm ${
+                                            msg.sender === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-brand-600 text-white'
+                                        }`}>
+                                            {msg.sender === 'user' ? <User size={16} /> : <ShieldCheck size={16} />}
+                                        </div>
+
+                                        {/* Burbuja de Texto */}
+                                        <div class={`p-4 rounded-2xl shadow-sm text-[15px] leading-relaxed whitespace-pre-wrap ${
+                                            msg.sender === 'user' 
+                                            ? 'bg-slate-800 text-white rounded-tr-sm' 
+                                            : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm'
+                                        }`}>
+                                            {msg.text}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {msg.type === 'verdict' && (
+                                    <VerdictCard caseData={caseData} onReset={resetChat} />
+                                )}
+                            </div>
+                        ))}
+                        
+                        {isTyping && (
+                            <div class="flex gap-3 max-w-[85%]">
+                                <div class="shrink-0 w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center mt-1 shadow-sm">
+                                    <ShieldCheck size={16} />
+                                </div>
+                                <TypingIndicator />
+                            </div>
+                        )}
+                        
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input Area */}
+                    <div class="bg-white p-4 border-t border-slate-100">
+                        <form onSubmit={handleSend} class="flex gap-3 relative">
+                            <textarea
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend(e);
+                                    }
+                                }}
+                                placeholder={step < 4 ? "Escribe tu respuesta aquí..." : "El caso ha concluido..."}
+                                disabled={isTyping || step >= 4}
+                                class="flex-1 resize-none bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all min-h-[50px] max-h-[120px]"
+                                rows="1"
+                            />
+                            <button 
+                                type="submit"
+                                disabled={!inputValue.trim() || isTyping || step >= 4}
+                                class="absolute right-2 bottom-2 p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:hover:bg-brand-600 transition-colors shadow-sm"
+                            >
+                                <Send size={18} />
+                            </button>
+                        </form>
+                        <p class="text-center text-[10px] text-slate-400 mt-2">
+                            Presiona Enter para enviar. Shift + Enter para salto de línea.
+                        </p>
+                    </div>
+
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
